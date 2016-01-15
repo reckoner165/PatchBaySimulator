@@ -3,10 +3,12 @@ __author__ = 'Sumanth Srinivasan'
 
 #CHECKLIST
 
-#1.Get a way to invoke the patch bay after patching has been done, so as to actually get all input stuff to the output.
+#1.Get a way to invoke the patch bay after patching has been done, so as to actually get all signals across the patchbay into applications using it.
 #2.Error handling
 #3.See if it can work with librosa
 #4.Look for other audio packages to test it with
+#5.Get the TRS and normal connections figured out
+#6.Get the half and full normal done
 
 class patchbay:
 
@@ -46,10 +48,10 @@ class patchbay:
 
             if normalType == 'HALF':
                 #Write code for half normal connections
-                pass
+                self.input[channel].normal = self.output[channel].portSignal2
             elif normalType == 'FULL':
-                #Write code for full normal connections
-                pass
+                #Write code for full normal connections (AKA Single normalling)
+                self.input[channel].normal = self.output[channel].normal
             else:
                 print('Invalid normal Type. Choose from HALF and FULL')
 
@@ -58,11 +60,52 @@ class patchbay:
 
     #Methods availabe in USER mode
 
-    def patch(self,port1,port2):
-        pass
+    #Method to patch two ports on the patch bay
+    def setPatch(self,outputPort,inputPort):
 
-    def removePatch(self,port1,port2):
-        pass
+        #Check if patch bay is in USER mode
+        if self.modeTest('USER'):
+            if ~self.output[outputPort].patchFlag:
+                if ~self.input[inputPort].patchFlag:
+                    self.input[inputPort].portSignal = self.output[outputPort].portSignal
+
+                    #Set patch flags
+                    self.input[inputPort].patchFlag = True
+                    self.output[outputPort].patchFlag = True
+
+                    #Refresh both patch states so the reflect the connections
+                    self.input[inputPort].refreshPatchState()
+                    self.output[outputPort].refreshPatchState()
+                    #TO-DO: Add a patched-label that gives info on where the given port is patched to/from
+                else:
+                    print('Input port is already patched to something else.')
+            else:
+                print('Output port is already patched to something else')
+        else:
+            print('Incorrect mode')
+
+
+    #Method to remove a patch between two ports
+    def removePatch(self,outputPort,inputPort):
+
+        #Check if patch bay is in USER mode
+        if self.modeTest('USER'):
+            if self.output[outputPort].patchFlag:
+                if self.input[inputPort].patchFlag:
+                    #Reset patch flags
+                    self.input[inputPort].patchFlag = False
+                    self.output[outputPort].patchFlag = False
+
+                    #Refresh both patch states so the reflect the connections
+                    self.input[inputPort].refreshPatchState()
+                    self.output[outputPort].refreshPatchState()
+                    #TO-DO: Reset patched label to 'Nothing' or whatever.
+                else:
+                    print('Input port is patched to nothing.')
+            else:
+                print('Output port is patched to nothing')
+        else:
+            print('Incorrect mode')
 
 
 
@@ -87,15 +130,24 @@ class patchpoint:
             self.inputFlag = True
 
         else:
-            self.inputFlag = True
+            self.inputFlag = False
 
         self.refreshPatchState()
 
+    #Refresh patch state in the event of patching or un patching of ports so that the normals will engage accordingly.
     def refreshPatchState(self):
-        if self.patchFlag:
-            pass #Set TRS and normals
-        else:
-            pass #Set TRS and normals
+        if self.inputFlag: #If input port
+            if self.patchFlag:
+                self.portSignal = self.portSignal
+            else:
+                self.portSignal = self.normal
+
+        else: #If output port
+            if self.patchFlag:
+                self.normal = 0
+            else:
+                self.normal = self.portSignal
+            self.portSignal2 = self.portSignal #Make a copy for half normal
 
 
 #DEBUG
