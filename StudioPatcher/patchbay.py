@@ -7,8 +7,10 @@ __author__ = 'Sumanth Srinivasan'
 #2.Error handling
 #3.See if it can work with librosa
 #4.Look for other audio packages to test it with
-#5.Get the TRS and normal connections figured out
-#6.Get the half and full normal done
+#5.[DONE]Get the TRS and normal connections figured out
+#6.[DONE]Get the half and full normal done
+#7.Documentation!
+
 
 class patchbay:
 
